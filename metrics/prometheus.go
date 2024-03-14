@@ -1761,7 +1761,7 @@ const (
 	// ContainerLabelPrefix is the prefix added to all container labels.
 	ContainerLabelPrefix = "container_label_"
 	// ContainerEnvPrefix is the prefix added to all env variable labels.
-	ContainerEnvPrefix = "container_env_"
+	ContainerEnvPrefix = ""
 	// LabelID is the name of the id label.
 	LabelID = "id"
 	// LabelName is the name of the name label.
