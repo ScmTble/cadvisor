@@ -137,30 +137,6 @@ func NewPrometheusCollector(i infoProvider, f ContainerLabelsFunc, includedMetri
 	if includedMetrics.Has(container.CpuUsageMetrics) {
 		c.containerMetrics = append(c.containerMetrics, []containerMetric{
 			{
-				name:      "container_cpu_user_seconds_total",
-				help:      "Cumulative user cpu time consumed in seconds.",
-				valueType: prometheus.CounterValue,
-				getValues: func(s *info.ContainerStats) metricValues {
-					return metricValues{
-						{
-							value:     float64(s.Cpu.Usage.User) / float64(time.Second),
-							timestamp: s.Timestamp,
-						},
-					}
-				},
-			}, {
-				name:      "container_cpu_system_seconds_total",
-				help:      "Cumulative system cpu time consumed in seconds.",
-				valueType: prometheus.CounterValue,
-				getValues: func(s *info.ContainerStats) metricValues {
-					return metricValues{
-						{
-							value:     float64(s.Cpu.Usage.System) / float64(time.Second),
-							timestamp: s.Timestamp,
-						},
-					}
-				},
-			}, {
 				name:        "container_cpu_usage_seconds_total",
 				help:        "Cumulative cpu time consumed in seconds.",
 				valueType:   prometheus.CounterValue,
@@ -186,42 +162,6 @@ func NewPrometheusCollector(i infoProvider, f ContainerLabelsFunc, includedMetri
 						}
 					}
 					return values
-				},
-			}, {
-				name:      "container_cpu_cfs_periods_total",
-				help:      "Number of elapsed enforcement period intervals.",
-				valueType: prometheus.CounterValue,
-				condition: func(s info.ContainerSpec) bool { return s.Cpu.Quota != 0 },
-				getValues: func(s *info.ContainerStats) metricValues {
-					return metricValues{
-						{
-							value:     float64(s.Cpu.CFS.Periods),
-							timestamp: s.Timestamp,
-						}}
-				},
-			}, {
-				name:      "container_cpu_cfs_throttled_periods_total",
-				help:      "Number of throttled period intervals.",
-				valueType: prometheus.CounterValue,
-				condition: func(s info.ContainerSpec) bool { return s.Cpu.Quota != 0 },
-				getValues: func(s *info.ContainerStats) metricValues {
-					return metricValues{
-						{
-							value:     float64(s.Cpu.CFS.ThrottledPeriods),
-							timestamp: s.Timestamp,
-						}}
-				},
-			}, {
-				name:      "container_cpu_cfs_throttled_seconds_total",
-				help:      "Total time duration the container has been throttled.",
-				valueType: prometheus.CounterValue,
-				condition: func(s info.ContainerSpec) bool { return s.Cpu.Quota != 0 },
-				getValues: func(s *info.ContainerStats) metricValues {
-					return metricValues{
-						{
-							value:     float64(s.Cpu.CFS.ThrottledTime) / float64(time.Second),
-							timestamp: s.Timestamp,
-						}}
 				},
 			},
 		}...)
@@ -362,60 +302,14 @@ func NewPrometheusCollector(i infoProvider, f ContainerLabelsFunc, includedMetri
 		}...)
 	}
 	if includedMetrics.Has(container.MemoryUsageMetrics) {
-		c.containerMetrics = append(c.containerMetrics, []containerMetric{
-			{
-				name:      "container_memory_cache",
-				help:      "Number of bytes of page cache memory.",
-				valueType: prometheus.GaugeValue,
-				getValues: func(s *info.ContainerStats) metricValues {
-					return metricValues{{value: float64(s.Memory.Cache), timestamp: s.Timestamp}}
-				},
-			}, {
-				name:      "container_memory_rss",
-				help:      "Size of RSS in bytes.",
-				valueType: prometheus.GaugeValue,
-				getValues: func(s *info.ContainerStats) metricValues {
-					return metricValues{{value: float64(s.Memory.RSS), timestamp: s.Timestamp}}
-				},
-			}, {
-				name:      "container_memory_kernel_usage",
-				help:      "Size of kernel memory allocated in bytes.",
-				valueType: prometheus.GaugeValue,
-				getValues: func(s *info.ContainerStats) metricValues {
-					return metricValues{{value: float64(s.Memory.KernelUsage), timestamp: s.Timestamp}}
-				},
-			}, {
-				name:      "container_memory_mapped_file",
-				help:      "Size of memory mapped files in bytes.",
-				valueType: prometheus.GaugeValue,
-				getValues: func(s *info.ContainerStats) metricValues {
-					return metricValues{{value: float64(s.Memory.MappedFile), timestamp: s.Timestamp}}
-				},
-			}, {
-				name:      "container_memory_swap",
-				help:      "Container swap usage in bytes.",
-				valueType: prometheus.GaugeValue,
-				getValues: func(s *info.ContainerStats) metricValues {
-					return metricValues{{value: float64(s.Memory.Swap), timestamp: s.Timestamp}}
-				},
-			}, {
-				name:      "container_memory_failcnt",
-				help:      "Number of memory usage hits limits",
-				valueType: prometheus.CounterValue,
-				getValues: func(s *info.ContainerStats) metricValues {
-					return metricValues{{
-						value:     float64(s.Memory.Failcnt),
-						timestamp: s.Timestamp,
-					}}
-				},
-			}, {
-				name:      "container_memory_usage_bytes",
-				help:      "Current memory usage in bytes, including all memory regardless of when it was accessed",
-				valueType: prometheus.GaugeValue,
-				getValues: func(s *info.ContainerStats) metricValues {
-					return metricValues{{value: float64(s.Memory.Usage), timestamp: s.Timestamp}}
-				},
+		c.containerMetrics = append(c.containerMetrics, []containerMetric{{
+			name:      "container_memory_usage_bytes",
+			help:      "Current memory usage in bytes, including all memory regardless of when it was accessed",
+			valueType: prometheus.GaugeValue,
+			getValues: func(s *info.ContainerStats) metricValues {
+				return metricValues{{value: float64(s.Memory.Usage), timestamp: s.Timestamp}}
 			},
+		},
 			{
 				name:      "container_memory_max_usage_bytes",
 				help:      "Maximum memory usage recorded in bytes",
@@ -429,36 +323,6 @@ func NewPrometheusCollector(i infoProvider, f ContainerLabelsFunc, includedMetri
 				valueType: prometheus.GaugeValue,
 				getValues: func(s *info.ContainerStats) metricValues {
 					return metricValues{{value: float64(s.Memory.WorkingSet), timestamp: s.Timestamp}}
-				},
-			},
-			{
-				name:        "container_memory_failures_total",
-				help:        "Cumulative count of memory allocation failures.",
-				valueType:   prometheus.CounterValue,
-				extraLabels: []string{"failure_type", "scope"},
-				getValues: func(s *info.ContainerStats) metricValues {
-					return metricValues{
-						{
-							value:     float64(s.Memory.ContainerData.Pgfault),
-							labels:    []string{"pgfault", "container"},
-							timestamp: s.Timestamp,
-						},
-						{
-							value:     float64(s.Memory.ContainerData.Pgmajfault),
-							labels:    []string{"pgmajfault", "container"},
-							timestamp: s.Timestamp,
-						},
-						{
-							value:     float64(s.Memory.HierarchicalData.Pgfault),
-							labels:    []string{"pgfault", "hierarchy"},
-							timestamp: s.Timestamp,
-						},
-						{
-							value:     float64(s.Memory.HierarchicalData.Pgmajfault),
-							labels:    []string{"pgmajfault", "hierarchy"},
-							timestamp: s.Timestamp,
-						},
-					}
 				},
 			},
 		}...)
@@ -765,54 +629,6 @@ func NewPrometheusCollector(i infoProvider, f ContainerLabelsFunc, includedMetri
 					return values
 				},
 			}, {
-				name:        "container_network_receive_packets_total",
-				help:        "Cumulative count of packets received",
-				valueType:   prometheus.CounterValue,
-				extraLabels: []string{"interface"},
-				getValues: func(s *info.ContainerStats) metricValues {
-					values := make(metricValues, 0, len(s.Network.Interfaces))
-					for _, value := range s.Network.Interfaces {
-						values = append(values, metricValue{
-							value:     float64(value.RxPackets),
-							labels:    []string{value.Name},
-							timestamp: s.Timestamp,
-						})
-					}
-					return values
-				},
-			}, {
-				name:        "container_network_receive_packets_dropped_total",
-				help:        "Cumulative count of packets dropped while receiving",
-				valueType:   prometheus.CounterValue,
-				extraLabels: []string{"interface"},
-				getValues: func(s *info.ContainerStats) metricValues {
-					values := make(metricValues, 0, len(s.Network.Interfaces))
-					for _, value := range s.Network.Interfaces {
-						values = append(values, metricValue{
-							value:     float64(value.RxDropped),
-							labels:    []string{value.Name},
-							timestamp: s.Timestamp,
-						})
-					}
-					return values
-				},
-			}, {
-				name:        "container_network_receive_errors_total",
-				help:        "Cumulative count of errors encountered while receiving",
-				valueType:   prometheus.CounterValue,
-				extraLabels: []string{"interface"},
-				getValues: func(s *info.ContainerStats) metricValues {
-					values := make(metricValues, 0, len(s.Network.Interfaces))
-					for _, value := range s.Network.Interfaces {
-						values = append(values, metricValue{
-							value:     float64(value.RxErrors),
-							labels:    []string{value.Name},
-							timestamp: s.Timestamp,
-						})
-					}
-					return values
-				},
-			}, {
 				name:        "container_network_transmit_bytes_total",
 				help:        "Cumulative count of bytes transmitted",
 				valueType:   prometheus.CounterValue,
@@ -822,54 +638,6 @@ func NewPrometheusCollector(i infoProvider, f ContainerLabelsFunc, includedMetri
 					for _, value := range s.Network.Interfaces {
 						values = append(values, metricValue{
 							value:     float64(value.TxBytes),
-							labels:    []string{value.Name},
-							timestamp: s.Timestamp,
-						})
-					}
-					return values
-				},
-			}, {
-				name:        "container_network_transmit_packets_total",
-				help:        "Cumulative count of packets transmitted",
-				valueType:   prometheus.CounterValue,
-				extraLabels: []string{"interface"},
-				getValues: func(s *info.ContainerStats) metricValues {
-					values := make(metricValues, 0, len(s.Network.Interfaces))
-					for _, value := range s.Network.Interfaces {
-						values = append(values, metricValue{
-							value:     float64(value.TxPackets),
-							labels:    []string{value.Name},
-							timestamp: s.Timestamp,
-						})
-					}
-					return values
-				},
-			}, {
-				name:        "container_network_transmit_packets_dropped_total",
-				help:        "Cumulative count of packets dropped while transmitting",
-				valueType:   prometheus.CounterValue,
-				extraLabels: []string{"interface"},
-				getValues: func(s *info.ContainerStats) metricValues {
-					values := make(metricValues, 0, len(s.Network.Interfaces))
-					for _, value := range s.Network.Interfaces {
-						values = append(values, metricValue{
-							value:     float64(value.TxDropped),
-							labels:    []string{value.Name},
-							timestamp: s.Timestamp,
-						})
-					}
-					return values
-				},
-			}, {
-				name:        "container_network_transmit_errors_total",
-				help:        "Cumulative count of errors encountered while transmitting",
-				valueType:   prometheus.CounterValue,
-				extraLabels: []string{"interface"},
-				getValues: func(s *info.ContainerStats) metricValues {
-					values := make(metricValues, 0, len(s.Network.Interfaces))
-					for _, value := range s.Network.Interfaces {
-						values = append(values, metricValue{
-							value:     float64(value.TxErrors),
 							labels:    []string{value.Name},
 							timestamp: s.Timestamp,
 						})
@@ -1729,9 +1497,9 @@ func NewPrometheusCollector(i infoProvider, f ContainerLabelsFunc, includedMetri
 var (
 	versionInfoDesc = prometheus.NewDesc("cadvisor_version_info", "A metric with a constant '1' value labeled by kernel version, OS version, docker version, cadvisor version & cadvisor revision.", []string{"kernelVersion", "osVersion", "dockerVersion", "cadvisorVersion", "cadvisorRevision"}, nil)
 	startTimeDesc   = prometheus.NewDesc("container_start_time_seconds", "Start time of the container since unix epoch in seconds.", nil, nil)
-	cpuPeriodDesc   = prometheus.NewDesc("container_spec_cpu_period", "CPU period of the container.", nil, nil)
-	cpuQuotaDesc    = prometheus.NewDesc("container_spec_cpu_quota", "CPU quota of the container.", nil, nil)
-	cpuSharesDesc   = prometheus.NewDesc("container_spec_cpu_shares", "CPU share of the container.", nil, nil)
+	// cpuPeriodDesc   = prometheus.NewDesc("container_spec_cpu_period", "CPU period of the container.", nil, nil)
+	// cpuQuotaDesc    = prometheus.NewDesc("container_spec_cpu_quota", "CPU quota of the container.", nil, nil)
+	// cpuSharesDesc   = prometheus.NewDesc("container_spec_cpu_shares", "CPU share of the container.", nil, nil)
 )
 
 // Describe describes all the metrics ever exported by cadvisor. It
@@ -1742,9 +1510,9 @@ func (c *PrometheusCollector) Describe(ch chan<- *prometheus.Desc) {
 		ch <- cm.desc([]string{})
 	}
 	ch <- startTimeDesc
-	ch <- cpuPeriodDesc
-	ch <- cpuQuotaDesc
-	ch <- cpuSharesDesc
+	// ch <- cpuPeriodDesc
+	// ch <- cpuQuotaDesc
+	// ch <- cpuSharesDesc
 	ch <- versionInfoDesc
 }
 
@@ -1867,12 +1635,12 @@ func (c *PrometheusCollector) collectContainersInfo(ch chan<- prometheus.Metric)
 
 		}
 		if cont.Spec.HasMemory {
-			desc := prometheus.NewDesc("container_spec_memory_limit_bytes", "Memory limit for the container.", labels, nil)
-			ch <- prometheus.MustNewConstMetric(desc, prometheus.GaugeValue, specMemoryValue(cont.Spec.Memory.Limit), values...)
-			desc = prometheus.NewDesc("container_spec_memory_swap_limit_bytes", "Memory swap limit for the container.", labels, nil)
-			ch <- prometheus.MustNewConstMetric(desc, prometheus.GaugeValue, specMemoryValue(cont.Spec.Memory.SwapLimit), values...)
-			desc = prometheus.NewDesc("container_spec_memory_reservation_limit_bytes", "Memory reservation limit for the container.", labels, nil)
-			ch <- prometheus.MustNewConstMetric(desc, prometheus.GaugeValue, specMemoryValue(cont.Spec.Memory.Reservation), values...)
+			// desc := prometheus.NewDesc("container_spec_memory_limit_bytes", "Memory limit for the container.", labels, nil)
+			// ch <- prometheus.MustNewConstMetric(desc, prometheus.GaugeValue, specMemoryValue(cont.Spec.Memory.Limit), values...)
+			// desc = prometheus.NewDesc("container_spec_memory_swap_limit_bytes", "Memory swap limit for the container.", labels, nil)
+			// ch <- prometheus.MustNewConstMetric(desc, prometheus.GaugeValue, specMemoryValue(cont.Spec.Memory.SwapLimit), values...)
+			// desc = prometheus.NewDesc("container_spec_memory_reservation_limit_bytes", "Memory reservation limit for the container.", labels, nil)
+			// ch <- prometheus.MustNewConstMetric(desc, prometheus.GaugeValue, specMemoryValue(cont.Spec.Memory.Reservation), values...)
 		}
 
 		// Now for the actual metrics
